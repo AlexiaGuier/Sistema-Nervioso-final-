@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Nervioso y Límbico</title>
+<style>
+  /* Layout: header + tab bar; one panel per activity. Same dark visual family as the course's other apps. */
+  :root{
+    --bg-0:#0f1222; --bg-1:#171b34;
+    --panel:#1d2140; --panel-2:#242a4f;
+    --ink:#eef0fb; --ink-dim:#a8adcf;
+    --accent:#7c8cff; --accent-2:#ff8fb3; --accent-3:#5eead4;
+    --good:#4ade80; --bad:#f87171; --warn:#fbbf24;
+    --line:rgba(255,255,255,.22);
+    --hair:rgba(255,255,255,.08);
+    --lobe-f:rgba(124,140,255,.30); --lobe-p:rgba(255,143,179,.26); --lobe-t:rgba(94,234,212,.24); --lobe-o:rgba(251,191,36,.24);
+    --cbl:#4a4677; --stem:#474c6e;
+    --radius:18px;
+    --shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    color-scheme:dark;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  html,body{min-height:100%;}
+  body{
+    margin:0; font-family:"Segoe UI", Avenir, "Helvetica Neue", Arial, sans-serif; color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(124,140,255,.25), transparent 60%),
+      radial-gradient(900px 600px at 100% 0%, rgba(255,143,179,.18), transparent 55%),
+      radial-gradient(900px 700px at 50% 120%, rgba(94,234,212,.15), transparent 55%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    background-color:var(--bg-0); background-attachment:fixed;
+    padding-inline:16px; padding-block:18px 32px;
+  }
+  .wrap{ width:100%; max-width:1020px; margin:0 auto; }
+  header{ text-align:center; position:relative; padding:0 44px; margin-bottom:8px; }
+  header h1{
+    font-size:clamp(1.3rem, 2.6vw, 1.9rem); margin:0 0 4px; font-weight:800; letter-spacing:.2px; text-wrap:balance;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2) 60%, var(--accent-3));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  header p{ margin:0; color:var(--ink-dim); font-size:.88rem; }
+  .help-btn{
+    appearance:none; cursor:pointer; position:absolute; top:0; right:0; width:34px; height:34px; border-radius:50%;
+    background:var(--panel); color:var(--ink); border:1px solid rgba(255,255,255,.12);
+    font-size:1rem; font-weight:800; display:flex; align-items:center; justify-content:center; font-family:inherit;
+  }
+  .help-btn:hover{ background:var(--panel-2); border-color:rgba(124,140,255,.5); }
+
+  nav.tabs{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:14px 0; }
+  nav.tabs button{
+    appearance:none; border:1px solid var(--hair); background:var(--panel); color:var(--ink-dim);
+    padding:10px 16px; border-radius:999px; font-size:.9rem; font-weight:600; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; gap:7px;
+  }
+  nav.tabs button:hover{ color:var(--ink); border-color:rgba(255,255,255,.2); }
+  nav.tabs button.active{ background:linear-gradient(135deg, var(--accent), #5b6bff); color:#fff; border-color:transparent; box-shadow:0 8px 24px -10px rgba(124,140,255,.7); }
+
+  .panel{
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid rgba(255,255,255,.06); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:clamp(14px, 3vw, 26px); min-height:420px;
+  }
+  .view{ display:none; }
+  .view.active{ display:block; animation:fadein .3s ease; }
+  @keyframes fadein{ from{opacity:.4; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .btn{ appearance:none; border:none; cursor:pointer; border-radius:14px; padding:11px 20px; font-size:.92rem; font-weight:700; color:#fff; font-family:inherit; }
+  .btn:active{ transform:scale(.96); }
+  .btn-ghost{ background:rgba(255,255,255,.08); color:var(--ink); }
+  .btn-ghost:hover{ background:rgba(255,255,255,.14); }
+  .btn-sm{ padding:8px 14px; font-size:.8rem; }
+  .btn-primary{ background:linear-gradient(135deg, var(--accent), #5b6bff); box-shadow:0 10px 24px -12px rgba(124,140,255,.7); }
+  :is(.btn, .chip, .pill, .drop, .match-item, .flashcard, nav.tabs button):focus-visible{ outline:2px solid var(--accent-3); outline-offset:2px; }
+
+  .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap; }
+  .progress{ flex:1; min-width:160px; height:8px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; }
+  .progress > div{ height:100%; width:0; background:linear-gradient(90deg, var(--accent-3), var(--accent)); border-radius:999px; transition:width .35s ease; }
+  .stats{ font-size:.85rem; color:var(--ink-dim); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .stats b{ color:var(--ink); }
+  .hint{ color:var(--ink-dim); font-size:.84rem; text-align:center; margin:0 0 14px; min-height:1.3em; }
+  .hint.good{ color:var(--good); } .hint.bad{ color:var(--bad); }
+
+  .pills{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:12px; }
+  .pill{ appearance:none; font-family:inherit; cursor:pointer; font-size:.82rem; font-weight:600; padding:7px 14px; border-radius:999px; border:1px solid var(--hair); background:rgba(255,255,255,.05); color:var(--ink-dim); }
+  .pill:hover{ color:var(--ink); }
+  .pill.active{ background:rgba(94,234,212,.14); border-color:rgba(94,234,212,.5); color:var(--accent-3); }
+
+  /* chips (tap or drag) */
+  .tray{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; min-height:46px; margin:18px 0 4px; }
+  .chip{
+    appearance:none; font-family:inherit; text-align:center;
+    padding:10px 16px; border-radius:12px; background:rgba(255,255,255,.06);
+    border:1.5px solid rgba(255,255,255,.14); color:var(--ink); font-size:.85rem; font-weight:600; line-height:1.3;
+    cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .chip:hover{ border-color:rgba(255,255,255,.3); }
+  .chip.selected{ border-color:var(--accent); background:rgba(124,140,255,.22); box-shadow:0 0 0 3px rgba(124,140,255,.2); }
+  .chip.dragging{ opacity:.3; }
+  .chip.shake{ animation:shake .45s ease; border-color:var(--bad); }
+  .tray.fn .chip{ max-width:340px; font-weight:500; font-size:.82rem; text-align:left; }
+  .ghost{
+    position:fixed; top:0; left:0; pointer-events:none; z-index:200; max-width:300px;
+    padding:10px 16px; border-radius:12px; background:linear-gradient(135deg, var(--accent), #5b6bff);
+    color:#fff; font-size:.85rem; font-weight:700; box-shadow:0 14px 30px -12px rgba(0,0,0,.6); transform:translate(-50%,-50%);
+  }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  /* generic drop target */
+  .drop{
+    border:2px dashed rgba(255,255,255,.35); background:rgba(255,255,255,.04); color:var(--ink-dim);
+    border-radius:12px; cursor:pointer; transition:background .15s, border-color .15s, transform .15s;
+  }
+  .drop.armed{ border-color:rgba(124,140,255,.7); }
+  .drop.hover{ border-color:var(--accent-3); background:rgba(94,234,212,.2); }
+  .drop.ok{ border-style:solid; border-color:var(--good); background:rgba(74,222,128,.18); color:#eafff0; cursor:default; }
+  .drop.wrong{ border-color:var(--bad); background:rgba(248,113,113,.24); animation:shake .45s ease; }
+
+  /* tree */
+  .tree-scroll{ overflow-x:auto; padding:6px 4px 20px; text-align:center; }
+  .tree, .tree ul{ font-size:0; padding-top:28px; position:relative; margin:0; padding-left:0; }
+  .tree{ display:inline-block; padding-top:0; white-space:nowrap; }
+  .tree ul{ white-space:nowrap; }
+  .tree li{ display:inline-block; vertical-align:top; text-align:center; list-style-type:none; position:relative; padding:28px 4px 0; font-size:1rem; white-space:nowrap; }
+  .tree li::before, .tree li::after{ content:''; position:absolute; top:0; right:50%; border-top:2px solid var(--line); width:50%; height:28px; }
+  .tree li::after{ right:auto; left:50%; border-left:2px solid var(--line); }
+  .tree li:only-child::after, .tree li:only-child::before{ display:none; }
+  .tree li:only-child{ padding-top:0; }
+  .tree li:first-child::before, .tree li:last-child::after{ border:0 none; }
+  .tree li:last-child::before{ border-right:2px solid var(--line); border-radius:0 6px 0 0; }
+  .tree li:first-child::after{ border-radius:6px 0 0 0; }
+  .tree ul ul::before{ content:''; position:absolute; top:0; left:50%; border-left:2px solid var(--line); width:0; height:28px; }
+  .tree > li{ padding-top:0; }
+  .tree > li::before, .tree > li::after{ display:none; }
+  .node{ display:inline-block; width:102px; padding:9px 6px; font-weight:700; font-size:.76rem; line-height:1.25; white-space:normal; }
+  .node.given{ border:2px solid var(--accent); border-radius:12px; background:linear-gradient(135deg, rgba(124,140,255,.3), rgba(124,140,255,.1)); color:var(--ink); font-size:.85rem; }
+
+  /* brain labeling */
+  .brain-wrap{ position:relative; width:100%; aspect-ratio:880/440; max-width:100%; }
+  .brain-wrap svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .brain-wrap svg text{ font-family:inherit; }
+  .bbox{
+    position:absolute; display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:clamp(.62rem, 1.35vw, .85rem); font-weight:700; line-height:1.15; padding:2px 6px; color:var(--ink-dim);
+  }
+  .bbox .n{ opacity:.7; }
+  .brain-list{ display:none; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px; }
+  .brain-list .slot{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .brain-list .slot .num{ flex:none; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; }
+  .brain-list .drop{ flex:1; min-width:0; min-height:40px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:.78rem; font-weight:700; padding:4px 6px; }
+  .num-marker{ display:none; }
+  @media (max-width:640px){
+    .bbox{ display:none; }
+    .brain-list{ display:grid; }
+    .num-marker{ display:inline; }
+  }
+
+  /* cuadro */
+  .cuadro{ width:100%; border-collapse:separate; border-spacing:0 8px; }
+  .cuadro th{ text-align:left; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-dim); padding:0 10px; font-weight:700; }
+  .cuadro td{ vertical-align:middle; }
+  .cuadro td.est{ width:28%; padding:12px 14px; font-weight:800; background:rgba(124,140,255,.14); border:1px solid rgba(124,140,255,.35); border-radius:12px 0 0 12px; border-right:none; }
+  .cuadro td.fn{ padding:0; }
+  .cuadro td.fn .drop{ border-radius:0 12px 12px 0; min-height:52px; padding:10px 14px; font-size:.86rem; line-height:1.4; display:flex; align-items:center; }
+  .cuadro td.fn .drop:not(.ok){ font-style:italic; }
+  @media (max-width:640px){
+    .cuadro, .cuadro tbody, .cuadro tr, .cuadro td{ display:block; width:100%; }
+    .cuadro thead{ display:none; }
+    .cuadro tr{ margin-bottom:10px; }
+    .cuadro td.est{ width:100%; border-radius:12px 12px 0 0; border-right:1px solid rgba(124,140,255,.35); border-bottom:none; padding:9px 12px; }
+    .cuadro td.fn .drop{ border-radius:0 0 12px 12px; }
+  }
+
+  /* flashcards */
+  .fc-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:16px; }
+  .flashcard{ perspective:1200px; height:180px; cursor:pointer; }
+  .flashcard-inner{ position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d; }
+  .flashcard.flipped .flashcard-inner{ transform:rotateY(180deg); }
+  .flashcard-face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:16px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; line-height:1.35; overflow-y:auto; }
+  .flashcard-front{ background:linear-gradient(135deg, rgba(124,140,255,.26), rgba(255,143,179,.16)); border:1px solid rgba(124,140,255,.35); font-weight:800; font-size:1rem; color:var(--ink); }
+  .flashcard-front small{ display:block; font-size:.66rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-3); margin-bottom:6px; }
+  .flashcard-back{ background:linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid rgba(255,255,255,.1); color:var(--ink-dim); font-size:.83rem; transform:rotateY(180deg); }
+  .flashcard-tap{ position:absolute; bottom:8px; right:10px; font-size:.65rem; color:var(--ink-dim); opacity:.7; }
+
+  /* match */
+  .match-grid{ display:grid; grid-template-columns:minmax(0, 300px) minmax(0, 1fr); gap:18px; }
+  .match-col h3{ margin:0 0 10px; font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-dim); }
+  .match-items{ display:flex; flex-direction:column; gap:8px; }
+  .match-item{ appearance:none; font-family:inherit; text-align:left; width:100%; color:var(--ink); padding:11px 14px; border-radius:12px; cursor:pointer; font-size:.9rem; line-height:1.35; background:rgba(255,255,255,.05); border:1.5px solid rgba(255,255,255,.09); }
+  .match-item.term{ font-weight:700; }
+  .match-item:hover:not(:disabled){ border-color:rgba(124,140,255,.5); }
+  .match-item.selected{ border-color:var(--accent); background:rgba(124,140,255,.18); }
+  .match-item.matched{ background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.6); color:var(--ink-dim); cursor:default; }
+  .match-item.wrong{ animation:shake .4s ease; border-color:var(--bad); background:rgba(248,113,113,.14); }
+  @media (max-width:720px){ .match-grid{ grid-template-columns:1fr; } }
+
+  .celebrate{ text-align:center; padding:20px 10px; }
+  .celebrate .big{ font-size:2.4rem; margin-bottom:4px; }
+  .celebrate h2{ margin:0 0 6px; }
+  .celebrate p{ color:var(--ink-dim); margin:0 0 14px; }
+  .actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  .modal-overlay{ display:none; position:fixed; inset:0; background:rgba(8,9,20,.65); backdrop-filter:blur(3px); z-index:80; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open{ display:flex; }
+  .modal{ width:100%; max-width:560px; max-height:85vh; overflow-y:auto; background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:1px solid var(--hair); border-radius:20px; box-shadow:var(--shadow); padding:24px; }
+  .modal h2{ margin:0 0 12px; font-size:1.2rem; }
+  .modal h3{ margin:14px 0 4px; font-size:.92rem; color:var(--accent-3); }
+  .modal p{ margin:0; color:var(--ink-dim); font-size:.9rem; line-height:1.5; }
+  .modal .btn{ display:block; margin:20px auto 0; }
+
+  .confetti{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50; }
+  .confetti span{ position:absolute; top:-10px; width:8px; height:14px; opacity:.9; animation:fall linear forwards; }
+  @keyframes fall{ to{ transform:translateY(110vh) rotate(540deg); opacity:0; } }
+  footer{ text-align:center; color:var(--ink-dim); font-size:.78rem; margin-top:16px; }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1>SISTEMA NERVIOSO</h1>
+    <p>Divisiones, encéfalo y sistema límbico · OE-2011</p>
+    <button class="help-btn" id="helpBtn" aria-label="Cómo funciona esta aplicación">?</button>
+  </header>
+
+  <nav class="tabs">
+    <button data-view="tree" class="active">🌳 Esquema</button>
+    <button data-view="brain">🧠 Rotular el encéfalo</button>
+    <button data-view="cuadro">📋 Cuadro de funciones</button>
+    <button data-view="flash">📇 Fichas</button>
+    <button data-view="match">🔗 Emparejar</button>
+  </nav>
+
+  <div class="panel">
+
+    <!-- ESQUEMA -->
+    <section id="tree" class="view active">
+      <div class="topbar">
+        <div class="progress"><div id="treeBar"></div></div>
+        <div class="stats" id="treeStats">0 / 12 correctas</div>
+        <button class="btn btn-ghost btn-sm" id="treeReset">🔀 Reiniciar</button>
+      </div>
+      <p class="hint" id="treeHint">Arrastra cada etiqueta a su casilla, o tócala y luego toca la casilla.</p>
+      <div id="treePlay">
+        <div class="tree-scroll">
+          <ul class="tree">
+            <li><div class="node given">Sistema Nervioso</div>
+              <ul>
+                <li><div class="node drop" data-id="snp">?</div>
+                  <ul>
+                    <li><div class="node drop" data-id="somatico">?</div></li>
+                    <li><div class="node drop" data-id="autonomo">?</div>
+                      <ul>
+                        <li><div class="node drop" data-id="simpatico">?</div></li>
+                        <li><div class="node drop" data-id="parasimpatico">?</div></li>
+                        <li><div class="node drop" data-id="enterico">?</div></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li><div class="node drop" data-id="snc">?</div>
+                  <ul>
+                    <li><div class="node drop" data-id="encefalo">?</div>
+                      <ul>
+                        <li><div class="node drop" data-id="cerebro">?</div></li>
+                        <li><div class="node drop" data-id="cerebelo">?</div></li>
+                        <li><div class="node drop" data-id="tallo">?</div></li>
+                      </ul>
+                    </li>
+                    <li><div class="node drop" data-id="medula">?</div></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="tray" id="treeTray"></div>
+      </div>
+      <div id="treeDone" class="celebrate" hidden>
+        <div class="big">🌳✨</div>
+        <h2>¡Completaste el esquema!</h2>
+        <p id="treeDoneText"></p>
+        <button class="btn btn-primary" id="treeRestart">Practicar de nuevo</button>
+      </div>
+    </section>
+
+    <!-- ROTULAR -->
+    <section id="brain" class="view">
+      <div class="pills" id="brainLevels">
+        <button class="pill active" data-level="6">Lóbulos, cerebelo y tallo (6)</button>
+        <button class="pill" data-level="8">Con cisuras (8)</button>
+      </div>
+      <div class="topbar">
+        <div class="progress"><div id="brainBar"></div></div>
+        <div class="stats" id="brainStats">0 / 6 correctas</div>
+        <button class="btn btn-ghost btn-sm" id="brainReset">🔀 Reiniciar</button>
+      </div>
+      <p class="hint" id="brainHint">Arrastra cada nombre a su recuadro, o tócalo y luego toca el recuadro.</p>
+      <div id="brainPlay">
+        <div class="brain-wrap" id="brainWrap">
+          <svg viewBox="0 0 880 440" role="img" aria-label="Vista lateral del encéfalo con recuadros para rotular">
+            <defs>
+              <clipPath id="cereClip"><path id="cereShape" d="M 95 230 C 55 175, 70 95, 160 62 C 240 32, 365 30, 445 68 C 515 102, 548 172, 525 240 C 512 276, 482 290, 450 286 C 420 283, 392 285, 368 292 C 335 304, 305 322, 262 324 C 212 326, 172 304, 163 272 C 150 258, 122 250, 95 230 Z"/></clipPath>
+              <clipPath id="cblClip"><path d="M 330 300 C 345 270, 420 262, 480 272 C 520 280, 532 315, 505 340 C 470 368, 380 366, 345 345 C 325 333, 322 312, 330 300 Z"/></clipPath>
+              <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--ink)"/></marker>
+            </defs>
+            <g transform="translate(140,0)" stroke="var(--ink)" stroke-linejoin="round" stroke-linecap="round">
+              <!-- cerebelo -->
+              <path d="M 330 300 C 345 270, 420 262, 480 272 C 520 280, 532 315, 505 340 C 470 368, 380 366, 345 345 C 325 333, 322 312, 330 300 Z" fill="var(--cbl)" stroke-width="3"/>
+              <g clip-path="url(#cblClip)" fill="none" stroke-width="1.6" opacity=".75">
+                <path d="M 335 300 C 400 285, 470 290, 525 305"/><path d="M 330 314 C 400 300, 475 305, 530 320"/>
+                <path d="M 332 328 C 400 316, 470 320, 525 334"/><path d="M 340 342 C 400 332, 465 336, 515 346"/>
+                <path d="M 355 355 C 410 348, 455 350, 495 356"/>
+              </g>
+              <!-- tallo cerebral -->
+              <path d="M 318 288 C 326 330, 338 372, 334 432 L 374 432 C 370 382, 372 334, 382 288 Z" fill="var(--stem)" stroke-width="3"/>
+              <path d="M 330 335 C 345 345, 362 345, 376 336" fill="none" stroke-width="1.4" opacity=".6"/>
+              <!-- cerebro: lóbulos -->
+              <use href="#cereShape" fill="var(--panel)" stroke="none"/>
+              <g clip-path="url(#cereClip)" stroke="none">
+                <path fill="var(--lobe-f)" d="M 0 0 L 314 0 L 312 36 C 305 90, 290 150, 262 228 L 230 237 L 200 248 L 165 262 L 0 330 Z"/>
+                <path fill="var(--lobe-p)" d="M 314 0 L 470 0 L 455 72 C 448 140, 447 180, 449 212 C 425 210, 400 205, 375 196 C 355 206, 330 216, 300 222 L 262 228 C 290 150, 305 90, 312 36 Z"/>
+                <path fill="var(--lobe-o)" d="M 470 0 L 720 0 L 720 440 L 452 440 L 452 287 C 445 210, 448 140, 455 72 Z"/>
+                <path fill="var(--lobe-t)" d="M 165 262 L 200 248 L 230 237 L 262 228 L 300 222 C 330 216, 355 206, 375 196 C 400 205, 425 210, 449 212 C 450 240, 451 265, 452 287 L 452 440 L 90 440 Z"/>
+              </g>
+              <g clip-path="url(#cereClip)" fill="none" stroke-width="1.6" opacity=".7">
+                <path d="M 120 170 C 140 150, 150 175, 170 160 S 200 140, 215 165"/>
+                <path d="M 150 110 C 175 95, 185 125, 205 110 S 240 95, 255 120"/>
+                <path d="M 200 70 C 215 92, 240 78, 252 100"/>
+                <path d="M 112 212 C 140 198, 165 224, 195 205 S 232 200, 245 214"/>
+                <path d="M 225 150 C 248 172, 266 140, 280 168"/>
+                <path d="M 330 70 C 345 95, 365 80, 380 105 S 410 110, 430 95"/>
+                <path d="M 322 150 C 345 135, 360 165, 385 145 S 420 140, 435 165"/>
+                <path d="M 302 200 C 322 185, 342 200, 362 188"/>
+                <path d="M 470 110 C 490 125, 500 105, 515 130"/>
+                <path d="M 468 190 C 485 175, 505 200, 522 185"/>
+                <path d="M 470 250 C 490 240, 500 262, 515 250"/>
+                <path d="M 200 285 C 230 270, 250 295, 280 278 S 330 270, 350 280"/>
+                <path d="M 240 310 C 270 300, 300 315, 330 300"/>
+                <path d="M 370 240 C 390 255, 410 235, 435 250"/>
+              </g>
+              <!-- cisuras -->
+              <g fill="none" stroke-width="3">
+                <path d="M 312 36 C 305 90, 290 150, 262 228"/>
+                <path d="M 165 262 C 210 245, 250 232, 300 222 C 330 216, 355 206, 375 196"/>
+                <path d="M 455 72 C 448 140, 445 210, 452 287" stroke-width="2.2"/>
+                <path d="M 375 196 C 400 205, 425 210, 449 212" stroke-width="2.2"/>
+              </g>
+              <use href="#cereShape" fill="none" stroke-width="3.5"/>
+            </g>
+            <g id="leaders" stroke="var(--ink)" stroke-width="2" fill="none"></g>
+            <g id="markers"></g>
+          </svg>
+          <div id="brainBoxes"></div>
+        </div>
+        <div class="brain-list" id="brainList"></div>
+        <div class="tray" id="brainTray"></div>
+      </div>
+      <div id="brainDone" class="celebrate" hidden>
+        <div class="big">🧠✨</div>
+        <h2>¡Encéfalo rotulado!</h2>
+        <p id="brainDoneText"></p>
+        <div class="actions">
+          <button class="btn btn-ghost" id="brainAgain">Practicar de nuevo</button>
+          <button class="btn btn-primary" id="brainNext">Probar con cisuras (8)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CUADRO -->
+    <section id="cuadro" class="view">
+      <div class="pills" id="cuadroSets"></div>
+      <div class="topbar">
+        <div class="progress"><div id="cuadroBar"></div></div>
+        <div class="stats" id="cuadroStats">0 / 6 correctas</div>
+        <button class="btn btn-ghost btn-sm" id="cuadroReset">🔀 Reiniciar</button>
+      </div>
+      <p class="hint" id="cuadroHint">Coloca cada función en la fila de su estructura: arrástrala o tócala y luego toca la casilla.</p>
+      <div id="cuadroPlay">
+        <table class="cuadro">
+          <thead><tr><th>Estructura</th><th>Función principal</th></tr></thead>
+          <tbody id="cuadroBody"></tbody>
+        </table>
+        <div class="tray fn" id="cuadroTray"></div>
+      </div>
+      <div id="cuadroDone" class="celebrate" hidden>
+        <div class="big">📋✨</div>
+        <h2>¡Cuadro completo!</h2>
+        <p id="cuadroDoneText"></p>
+        <div class="actions">
+          <button class="btn btn-ghost" id="cuadroAgain">Practicar de nuevo</button>
+          <button class="btn btn-primary" id="cuadroNext">Siguiente cuadro</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FICHAS -->
+    <section id="flash" class="view">
+      <div class="pills" id="fcCats"></div>
+      <div class="topbar">
+        <p class="hint" style="margin:0;text-align:left;">Toca una ficha para ver la definición.</p>
+        <button class="btn btn-ghost btn-sm" id="fcShuffle">🔀 Barajar</button>
+      </div>
+      <div class="fc-grid" id="fcGrid" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- EMPAREJAR -->
+    <section id="match" class="view">
+      <div class="pills" id="matchCats"></div>
+      <div id="matchPlay">
+        <div class="topbar" style="margin-bottom:14px;">
+          <div class="stats">Pares <b id="matchPairs">0/8</b> · Errores <b id="matchErr">0</b> · Tiempo <b id="matchTime">0s</b></div>
+          <button class="btn btn-ghost btn-sm" id="matchReshuffle">🔀 Nueva ronda</button>
+        </div>
+        <div class="match-grid">
+          <div class="match-col"><h3>Conceptos</h3><div class="match-items" id="matchTerms"></div></div>
+          <div class="match-col"><h3>Definiciones</h3><div class="match-items" id="matchDefs"></div></div>
+        </div>
+      </div>
+      <div id="matchDone" class="celebrate" hidden>
+        <div class="big">✨</div>
+        <h2>¡Ronda completada!</h2>
+        <p id="matchDoneText"></p>
+        <button class="btn btn-primary" id="matchRestart">Jugar otra ronda</button>
+      </div>
+    </section>
+  </div>
+  <footer>Basado en los documentos “Sistema Nervioso”, Clase 7 y Clase 8 (Sistema límbico).</footer>
+</div>
+
+<div class="modal-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal">
+    <h2 id="helpTitle">¿Cómo funciona esta aplicación?</h2>
+    <p>Cinco actividades para repasar el sistema nervioso. En las de colocar, puedes arrastrar la etiqueta o tocarla y luego tocar la casilla.</p>
+    <h3>🌳 Esquema</h3>
+    <p>Ubica las 12 divisiones del sistema nervioso en el organizador.</p>
+    <h3>🧠 Rotular el encéfalo</h3>
+    <p>Escribe el nombre de cada parte señalada: los cuatro lóbulos, el cerebelo y el tallo cerebral. El nivel “Con cisuras” agrega la cisura de Rolando y la cisura de Silvio.</p>
+    <h3>📋 Cuadro de funciones</h3>
+    <p>Completa la columna de funciones de tres cuadros: lóbulos y áreas del lenguaje, estructuras del SNC y sistema límbico.</p>
+    <h3>📇 Fichas</h3>
+    <p>Toca una ficha para voltearla y ver la definición. Puedes filtrar por tema.</p>
+    <h3>🔗 Emparejar</h3>
+    <p>Une cada concepto con su definición. Cada ronda toma hasta 8 conceptos del tema elegido.</p>
+    <button class="btn btn-primary" id="helpClose">Entendido</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cols=['#7c8cff','#ff8fb3','#5eead4','#fbbf24','#4ade80'];
+  const box=document.createElement('div'); box.className='confetti'; document.body.appendChild(box);
+  for(let i=0;i<60;i++){ const s=document.createElement('span'); s.style.left=Math.random()*100+'vw'; s.style.background=cols[i%cols.length]; s.style.animationDuration=(2+Math.random()*1.5)+'s'; s.style.animationDelay=(Math.random()*.4)+'s'; s.style.borderRadius=Math.random()>.5?'50%':'2px'; box.appendChild(s); }
+  setTimeout(()=>box.remove(), 4000);
+}
+function fmt(s){ return s<60 ? s+'s' : Math.floor(s/60)+'m '+(s%60)+'s'; }
+
+/* ---------- Placement engine: tap-to-select or drag, shared by Esquema, Rotular and Cuadro ---------- */
+function Placer(o){
+  // o: {scope, tray, items:[{id,label,chip?}], fill(target,item), onProgress(done,total,errors), onDone(errors), hint}
+  let selected=null, drag=null, done=0, errors=0;
+  const total=o.items.length;
+  const targets = () => o.scope.querySelectorAll('.drop[data-id]');
+  function setHint(t,c){ if(o.hint){ o.hint.textContent=t; o.hint.className='hint'+(c?' '+c:''); } }
+  function select(chip){
+    if(selected) selected.classList.remove('selected');
+    selected = (selected===chip) ? null : chip;
+    if(selected){ selected.classList.add('selected'); targets().forEach(t=>{ if(!t.classList.contains('ok')) t.classList.add('armed'); }); setHint('Ahora toca la casilla donde va “'+selected.dataset.short+'”.'); }
+    else targets().forEach(t=>t.classList.remove('armed'));
+  }
+  function attempt(chip, target){
+    if(!target || target.classList.contains('ok')) return;
+    const id=chip.dataset.id;
+    if(target.dataset.id===id){
+      const item=o.items.find(i=>i.id===id);
+      o.scope.querySelectorAll('.drop[data-id="'+id+'"]').forEach(t=>{ t.classList.remove('hover','armed'); t.classList.add('ok'); o.fill(t,item); });
+      chip.remove(); if(selected===chip) selected=null;
+      targets().forEach(t=>t.classList.remove('armed'));
+      done++; setHint('¡Correcto!','good');
+      o.onProgress(done,total,errors);
+      if(done===total) setTimeout(()=>o.onDone(errors), 380);
+    } else {
+      errors++;
+      target.classList.add('wrong'); chip.classList.add('shake');
+      setTimeout(()=>{ target.classList.remove('wrong'); chip.classList.remove('shake'); }, 450);
+      setHint('No corresponde. Intenta con otra casilla.','bad');
+      o.onProgress(done,total,errors);
+    }
+  }
+  o.tray.innerHTML='';
+  shuffle(o.items).forEach(it=>{
+    const c=document.createElement('button'); c.type='button'; c.className='chip'; c.dataset.id=it.id; c.dataset.short=it.short||it.label;
+    c.textContent=it.chip||it.label; o.tray.appendChild(c);
+    c.addEventListener('pointerdown', e=>{
+      if(e.button>0) return;
+      drag={chip:c, x:e.clientX, y:e.clientY, moving:false, ghost:null, pid:e.pointerId};
+      document.addEventListener('pointermove', onMove); document.addEventListener('pointerup', onUp); document.addEventListener('pointercancel', onCancel);
+    });
+    c.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); select(c); } });
+  });
+  function onMove(e){
+    if(!drag) return;
+    if(!drag.moving){
+      if(Math.hypot(e.clientX-drag.x, e.clientY-drag.y)<7) return;
+      drag.moving=true;
+      const g=drag.chip.cloneNode(true); g.className='ghost'; document.body.appendChild(g); drag.ghost=g;
+      drag.chip.classList.add('dragging');
+      targets().forEach(t=>{ if(!t.classList.contains('ok')) t.classList.add('armed'); });
+    }
+    e.preventDefault();
+    drag.ghost.style.left=e.clientX+'px'; drag.ghost.style.top=e.clientY+'px';
+    o.scope.querySelectorAll('.drop.hover').forEach(t=>t.classList.remove('hover'));
+    const el=document.elementFromPoint(e.clientX,e.clientY); const t=el&&el.closest('.drop[data-id]');
+    if(t && o.scope.contains(t) && !t.classList.contains('ok')) t.classList.add('hover');
+  }
+  function onUp(e){
+    if(!drag) return;
+    const d=drag; cleanup();
+    if(d.moving){
+      const el=document.elementFromPoint(e.clientX,e.clientY); const t=el&&el.closest('.drop[data-id]');
+      if(t && o.scope.contains(t)) attempt(d.chip,t);
+      if(!selected) targets().forEach(t=>t.classList.remove('armed'));
+    } else select(d.chip);
+  }
+  function onCancel(){ cleanup(); }
+  function cleanup(){
+    if(drag){ if(drag.ghost) drag.ghost.remove(); drag.chip.classList.remove('dragging'); }
+    o.scope.querySelectorAll('.drop.hover').forEach(t=>t.classList.remove('hover'));
+    drag=null;
+    document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); document.removeEventListener('pointercancel', onCancel);
+  }
+  if(o.scope._placerClick) o.scope.removeEventListener('click', o.scope._placerClick);
+  o.scope._placerClick = e=>{
+    const t=e.target.closest('.drop[data-id]'); if(!t || !o.scope.contains(t) || t.classList.contains('ok')) return;
+    if(selected) attempt(selected,t); else setHint('Primero elige una etiqueta de la lista.');
+  };
+  o.scope.addEventListener('click', o.scope._placerClick);
+  o.onProgress(0,total,0);
+}
+
+/* ---------- Tabs & help ---------- */
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click', ()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+  document.querySelectorAll('.panel > .view').forEach(v=>v.classList.toggle('active', v.id===b.dataset.view));
+}));
+const help=$('#helpOverlay');
+$('#helpBtn').addEventListener('click', ()=>help.classList.add('open'));
+$('#helpClose').addEventListener('click', ()=>help.classList.remove('open'));
+help.addEventListener('click', e=>{ if(e.target===help) help.classList.remove('open'); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') help.classList.remove('open'); });
+
+/* ---------- 1. Esquema ---------- */
+const TREE = [
+  {id:'snp',label:'Sistema Nervioso Periférico'},{id:'snc',label:'Sistema Nervioso Central'},
+  {id:'somatico',label:'Somático'},{id:'autonomo',label:'Autónomo'},
+  {id:'simpatico',label:'Simpático'},{id:'parasimpatico',label:'Parasimpático'},{id:'enterico',label:'Entérico'},
+  {id:'encefalo',label:'Encéfalo'},{id:'medula',label:'Médula espinal'},
+  {id:'cerebro',label:'Cerebro'},{id:'cerebelo',label:'Cerebelo'},{id:'tallo',label:'Tallo'}
+];
+function buildTree(){
+  document.querySelectorAll('#tree .drop').forEach(d=>{ d.textContent='?'; d.className='node drop'; });
+  $('#treePlay').hidden=false; $('#treeDone').hidden=true;
+  Placer({ scope:$('#tree'), tray:$('#treeTray'), items:TREE, hint:$('#treeHint'),
+    fill:(t,it)=>{ t.textContent=it.label; },
+    onProgress:(d,n)=>{ $('#treeBar').style.width=(d/n*100)+'%'; $('#treeStats').textContent=d+' / '+n+' correctas'; },
+    onDone:err=>{ $('#treePlay').hidden=true; $('#treeDone').hidden=false; $('#treeDoneText').textContent='Ubicaste las 12 divisiones con '+err+(err===1?' error.':' errores.'); confetti(); }
+  });
+}
+$('#treeReset').addEventListener('click', buildTree); $('#treeRestart').addEventListener('click', buildTree);
+buildTree();
+
+/* ---------- 2. Rotular el encéfalo ---------- */
+// px, py = punto señalado; bx, by = centro del recuadro (coordenadas del viewBox 880×440)
+const BRAIN = [
+  {id:'frontal',   label:'Lóbulo frontal',   px:320, py:135, bx:85,  by:70,  lvl:6},
+  {id:'silvio',    label:'Cisura de Silvio', px:370, py:238, bx:85,  by:180, lvl:8},
+  {id:'temporal',  label:'Lóbulo temporal',  px:440, py:285, bx:85,  by:290, lvl:6},
+  {id:'tallo',     label:'Tallo cerebral',   px:494, py:398, bx:85,  by:400, lvl:6},
+  {id:'rolando',   label:'Cisura de Rolando',px:438, py:135, bx:795, by:40,  lvl:8},
+  {id:'parietal',  label:'Lóbulo parietal',  px:515, py:110, bx:795, by:135, lvl:6},
+  {id:'occipital', label:'Lóbulo occipital', px:635, py:200, bx:795, by:230, lvl:6},
+  {id:'cerebelo',  label:'Cerebelo',         px:590, py:325, bx:795, by:330, lvl:6}
+];
+let brainLevel=6;
+const BW=880, BH=440, BOXW=150, BOXH=40;
+function buildBrain(){
+  const items=BRAIN.filter(b=>b.lvl<=brainLevel);
+  const ns='http://www.w3.org/2000/svg';
+  const leaders=$('#leaders'), markers=$('#markers'), boxes=$('#brainBoxes'), list=$('#brainList');
+  leaders.innerHTML=''; markers.innerHTML=''; boxes.innerHTML=''; list.innerHTML='';
+  items.forEach((b,i)=>{
+    const n=i+1, left=b.bx<440;
+    const x1 = left ? b.bx+BOXW/2 : b.bx-BOXW/2;
+    const ln=document.createElementNS(ns,'line');
+    ln.setAttribute('x1',x1); ln.setAttribute('y1',b.by); ln.setAttribute('x2',b.px); ln.setAttribute('y2',b.py); ln.setAttribute('marker-end','url(#arr)');
+    leaders.appendChild(ln);
+    const g=document.createElementNS(ns,'g'); g.setAttribute('class','num-marker');
+    g.innerHTML='<circle cx="'+b.bx+'" cy="'+b.by+'" r="26" fill="var(--panel-2)" stroke="var(--accent)" stroke-width="3"/><text x="'+b.bx+'" y="'+(b.by+11)+'" text-anchor="middle" font-size="32" font-weight="800" fill="var(--ink)">'+n+'</text>';
+    markers.appendChild(g);
+    const d=document.createElement('div'); d.className='bbox drop'; d.dataset.id=b.id; d.dataset.n=n;
+    d.style.left=((b.bx-BOXW/2)/BW*100)+'%'; d.style.top=((b.by-BOXH/2)/BH*100)+'%';
+    d.style.width=(BOXW/BW*100)+'%'; d.style.height=(BOXH/BH*100)+'%';
+    d.innerHTML='<span class="n">'+n+'</span>'; boxes.appendChild(d);
+    const s=document.createElement('div'); s.className='slot';
+    s.innerHTML='<span class="num">'+n+'</span><div class="drop" data-id="'+b.id+'">?</div>'; list.appendChild(s);
+  });
+  $('#brainPlay').hidden=false; $('#brainDone').hidden=true;
+  document.querySelectorAll('#brainLevels .pill').forEach(p=>p.classList.toggle('active', +p.dataset.level===brainLevel));
+  Placer({ scope:$('#brain'), tray:$('#brainTray'), items, hint:$('#brainHint'),
+    fill:(t,it)=>{ t.textContent=it.label; },
+    onProgress:(d,n)=>{ $('#brainBar').style.width=(d/n*100)+'%'; $('#brainStats').textContent=d+' / '+n+' correctas'; },
+    onDone:err=>{ $('#brainPlay').hidden=true; $('#brainDone').hidden=false; $('#brainNext').hidden = brainLevel===8;
+      $('#brainDoneText').textContent='Rotulaste las '+items.length+' partes con '+err+(err===1?' error.':' errores.'); confetti(); }
+  });
+}
+$('#brainLevels').addEventListener('click', e=>{ const p=e.target.closest('.pill'); if(p){ brainLevel=+p.dataset.level; buildBrain(); } });
+$('#brainReset').addEventListener('click', buildBrain); $('#brainAgain').addEventListener('click', buildBrain);
+$('#brainNext').addEventListener('click', ()=>{ brainLevel=8; buildBrain(); });
+buildBrain();
+
+/* ---------- 3. Cuadro de funciones ---------- */
+const CUADROS = [
+  {key:'lob', name:'Lóbulos y áreas', rows:[
+    {id:'c-fr', label:'Lóbulo frontal', fn:'Base de las funciones ejecutivas: planificación, organización, control de impulsos y toma de decisiones.'},
+    {id:'c-pa', label:'Lóbulo parietal', fn:'Recibe e interpreta la información somatosensorial; orientación espacial.'},
+    {id:'c-te', label:'Lóbulo temporal', fn:'Interpreta y recuerda información; memoria a largo plazo y comprensión de sonidos.'},
+    {id:'c-oc', label:'Lóbulo occipital', fn:'Centro principal de la percepción visual: colores, formas y movimientos.'},
+    {id:'c-br', label:'Área de Broca', fn:'Producción del lenguaje: coordina boca, lengua y laringe para hablar.'},
+    {id:'c-we', label:'Área de Wernicke', fn:'Comprensión del lenguaje hablado y escrito.'}
+  ]},
+  {key:'snc', name:'Estructuras del SNC', rows:[
+    {id:'c-cb', label:'Cerebelo', fn:'Relacionado con el aparato locomotor; se comunica con el cerebro y la médula espinal.'},
+    {id:'c-ta', label:'Tallo cerebral', fn:'Lleva información entre la médula, el cerebelo y el cerebro; encargado de funciones vitales.'},
+    {id:'c-me', label:'Médula espinal', fn:'Vía principal de conducción de la información; genera respuestas reflejas automáticas.'},
+    {id:'c-cc', label:'Cuerpo calloso', fn:'Conecta y coordina ambos hemisferios cerebrales.'},
+    {id:'c-hd', label:'Hemisferio derecho', fn:'Une elementos aislados para percibirlos como un todo; procesamiento visoespacial.'},
+    {id:'c-hi', label:'Hemisferio izquierdo', fn:'Extrae los detalles de la globalidad; principal responsable del lenguaje.'}
+  ]},
+  {key:'lim', name:'Sistema límbico', rows:[
+    {id:'c-tl', label:'Tálamo', fn:'Central de distribución: filtra los estímulos que entran (excepto el olfato) y los envía a zonas específicas.'},
+    {id:'c-hp', label:'Hipotálamo', fn:'Regula las hormonas de la hipófisis, la temperatura corporal y conductas como la alimentación y la agresión.'},
+    {id:'c-hc', label:'Hipocampo', fn:'Almacena las experiencias; transforma la memoria a corto plazo en memoria a largo plazo.'},
+    {id:'c-am', label:'Amígdala', fn:'Procesa y almacena las reacciones emocionales; activa el sistema nervioso autónomo (ansiedad).'},
+    {id:'c-nc', label:'Núcleo caudado', fn:'Percepción de la sensación de alarma ante algo que no funciona bien; modulación del movimiento.'},
+    {id:'c-pu', label:'Putamen', fn:'Condicionamiento operante (aprendizaje por refuerzo), recompensa y motivación.'}
+  ]}
+];
+let cuadroIdx=0;
+$('#cuadroSets').innerHTML = CUADROS.map((c,i)=>'<button class="pill" data-i="'+i+'">'+c.name+'</button>').join('');
+function buildCuadro(){
+  const c=CUADROS[cuadroIdx];
+  document.querySelectorAll('#cuadroSets .pill').forEach(p=>p.classList.toggle('active', +p.dataset.i===cuadroIdx));
+  $('#cuadroBody').innerHTML = shuffle(c.rows).map(r=>'<tr><td class="est">'+r.label+'</td><td class="fn"><div class="drop" data-id="'+r.id+'">Coloca aquí la función</div></td></tr>').join('');
+  $('#cuadroPlay').hidden=false; $('#cuadroDone').hidden=true;
+  Placer({ scope:$('#cuadro'), tray:$('#cuadroTray'), hint:$('#cuadroHint'),
+    items:c.rows.map(r=>({id:r.id, label:r.fn, short:r.fn.length>40 ? r.fn.slice(0,40)+'…' : r.fn})),
+    fill:(t,it)=>{ t.textContent=it.label; },
+    onProgress:(d,n)=>{ $('#cuadroBar').style.width=(d/n*100)+'%'; $('#cuadroStats').textContent=d+' / '+n+' correctas'; },
+    onDone:err=>{ $('#cuadroPlay').hidden=true; $('#cuadroDone').hidden=false;
+      const nx=CUADROS[cuadroIdx+1]; $('#cuadroNext').hidden=!nx; if(nx) $('#cuadroNext').textContent='Siguiente: '+nx.name;
+      $('#cuadroDoneText').textContent=c.name+': 6 funciones con '+err+(err===1?' error.':' errores.'); confetti(); }
+  });
+}
+$('#cuadroSets').addEventListener('click', e=>{ const p=e.target.closest('.pill'); if(p){ cuadroIdx=+p.dataset.i; buildCuadro(); } });
+$('#cuadroReset').addEventListener('click', buildCuadro); $('#cuadroAgain').addEventListener('click', buildCuadro);
+$('#cuadroNext').addEventListener('click', ()=>{ if(cuadroIdx<CUADROS.length-1){ cuadroIdx++; buildCuadro(); } });
+buildCuadro();
+
+/* ---------- Conceptos (fichas y emparejar) ---------- */
+const CATS = [
+  {key:'div', name:'Divisiones'},
+  {key:'enc', name:'Protección y encéfalo'},
+  {key:'lob', name:'Lóbulos y áreas'},
+  {key:'lim', name:'Sistema límbico'}
+];
+const TERMS = [
+  {c:'div', t:'Sistema Nervioso Periférico (SNP)', d:'Conecta el sistema nervioso central con la piel, los músculos y los órganos. Presenta funciones aferentes y eferentes.'},
+  {c:'div', t:'Componentes principales del SNP', d:'12 pares de nervios craneales, 31 pares de nervios espinales y ganglios.'},
+  {c:'div', t:'Sistema Nervioso Central (SNC)', d:'Integra, procesa y coordina toda la información que recibimos y todas las respuestas que emitimos.'},
+  {c:'div', t:'Componentes principales del SNC', d:'Encéfalo (cerebro, cerebelo y tallo) y médula espinal.'},
+  {c:'div', t:'Sistema Nervioso Somático', d:'Lleva y trae información procedente de la piel, los músculos y las articulaciones. Control voluntario y consciente.'},
+  {c:'div', t:'Sistema Nervioso Autónomo', d:'Funciones involuntarias e inconscientes. Regula el músculo cardíaco y las glándulas: frecuencia cardíaca, digestión, sudoración, diámetro de la pupila.'},
+  {c:'div', t:'Sistema Simpático', d:'Promueve la sobrevivencia: aumenta la frecuencia cardíaca, dilata pupilas y bronquios, redirige la sangre hacia los músculos y frena la digestión.'},
+  {c:'div', t:'Sistema Parasimpático', d:'Promueve la homeostasis (equilibrio interno): reduce la frecuencia cardíaca, contrae las pupilas, estimula la digestión y las secreciones.'},
+  {c:'div', t:'Sistema Entérico', d:'Controla el sistema gastrointestinal. Regula el movimiento y las secreciones intestinales.'},
+
+  {c:'enc', t:'Cráneo', d:'Estructura rígida de huesos unidos que rodea al encéfalo y lo protege contra impactos directos.'},
+  {c:'enc', t:'Columna vertebral', d:'Serie de vértebras articuladas que forman el conducto vertebral.'},
+  {c:'enc', t:'Líquido cefalorraquídeo', d:'Fluye por el espacio subaracnoideo y los ventrículos cerebrales; provee amortiguación y flotabilidad.'},
+  {c:'enc', t:'Cerebro', d:'Ubicado dentro del cráneo y rodeado de líquido cefalorraquídeo; se divide en 2 hemisferios y 4 lóbulos.'},
+  {c:'enc', t:'Cerebelo', d:'Relacionado con el aparato locomotor; se comunica con el cerebro y la médula espinal.'},
+  {c:'enc', t:'Tallo cerebral', d:'Lleva información desde la médula espinal hacia el cerebelo y el cerebro, y viceversa. Encargado de funciones vitales.'},
+  {c:'enc', t:'Médula espinal', d:'Vía principal de conducción por donde transita la información y se generan respuestas reflejas automáticas.'},
+  {c:'enc', t:'Cuerpo calloso', d:'Estructura compuesta de axones que conecta y coordina ambos hemisferios cerebrales.'},
+  {c:'enc', t:'Hemisferio derecho', d:'Une elementos aislados para percibirlos como un todo; procesamiento visoespacial.'},
+  {c:'enc', t:'Hemisferio izquierdo', d:'Extrae los detalles de la globalidad; principal responsable del lenguaje.'},
+  {c:'enc', t:'Plasticidad cerebral', d:'Capacidad del sistema nervioso central de modificarse en estructura y función.'},
+
+  {c:'lob', t:'Lóbulo frontal', d:'Base de las funciones ejecutivas, del pensamiento consciente y de la planificación de movimientos.'},
+  {c:'lob', t:'Lóbulo parietal', d:'Recibe e interpreta información somatosensorial; relación con el procesamiento de sonidos y la orientación espacial.'},
+  {c:'lob', t:'Lóbulo temporal', d:'Interpreta y recuerda información; memoria a largo plazo.'},
+  {c:'lob', t:'Lóbulo occipital', d:'Centro principal del sistema de percepción visual.'},
+  {c:'lob', t:'Área de Broca', d:'En el lóbulo frontal; producción del lenguaje. Su lesión causa afasia expresiva: la persona entiende, pero habla con mucho esfuerzo.'},
+  {c:'lob', t:'Área de Wernicke', d:'En el lóbulo temporal; comprensión del lenguaje hablado y escrito. Su lesión causa afasia receptiva: habla fluida pero con poco sentido.'},
+  {c:'lob', t:'Giro angular', d:'En el lóbulo parietal; participa en la lectura, el cálculo y la cognición numérica.'},
+  {c:'lob', t:'Cisura de Rolando (central)', d:'Separa el lóbulo frontal del lóbulo parietal.'},
+  {c:'lob', t:'Cisura de Silvio (lateral)', d:'Separa el lóbulo temporal de los lóbulos frontal y parietal.'},
+
+  {c:'lim', t:'Sistema límbico', d:'Red de estructuras interconectadas ubicada por encima y alrededor del tálamo. Regula emociones y motivación; participa en la memoria y el aprendizaje.'},
+  {c:'lim', t:'Tálamo', d:'Central de distribución: filtra los estímulos que entran (todos menos el olfato) y los envía a zonas específicas.'},
+  {c:'lim', t:'Hipotálamo', d:'Regula la liberación de hormonas de la hipófisis, mantiene la temperatura corporal y organiza conductas como la alimentación y la agresión.'},
+  {c:'lim', t:'Hipocampo', d:'Hace que las experiencias se almacenen en la memoria; transforma la memoria a corto plazo en memoria a largo plazo. Memoria espacial.'},
+  {c:'lim', t:'Amígdala', d:'Procesa y almacena las reacciones emocionales; activa el sistema nervioso autónomo (ansiedad). Relación con el olfato.'},
+  {c:'lim', t:'Núcleo caudado', d:'Ganglio basal que percibe la sensación de alarma ante algo que no funciona bien; modula el movimiento.'},
+  {c:'lim', t:'Putamen', d:'Ganglio basal relacionado con el condicionamiento operante (aprendizaje por refuerzo), la recompensa y la motivación.'}
+];
+const catName = k => (CATS.find(c=>c.key===k)||{}).name;
+
+/* ---------- 4. Fichas ---------- */
+let fcCat='all';
+$('#fcCats').innerHTML = '<button class="pill active" data-k="all">Todas</button>' + CATS.map(c=>'<button class="pill" data-k="'+c.key+'">'+c.name+'</button>').join('');
+function buildFlash(){
+  document.querySelectorAll('#fcCats .pill').forEach(p=>p.classList.toggle('active', p.dataset.k===fcCat));
+  const list = shuffle(TERMS.filter(t=>fcCat==='all'||t.c===fcCat));
+  $('#fcGrid').innerHTML = list.map(it=>'<div class="flashcard" tabindex="0" role="button" aria-label="'+it.t+'"><div class="flashcard-inner"><div class="flashcard-face flashcard-front"><small>'+catName(it.c)+'</small>'+it.t+'<span class="flashcard-tap">toca ↺</span></div><div class="flashcard-face flashcard-back">'+it.d+'</div></div></div>').join('');
+}
+$('#fcGrid').addEventListener('click', e=>{ const c=e.target.closest('.flashcard'); if(c) c.classList.toggle('flipped'); });
+$('#fcGrid').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('flashcard')){ e.preventDefault(); e.target.classList.toggle('flipped'); } });
+$('#fcCats').addEventListener('click', e=>{ const p=e.target.closest('.pill'); if(p){ fcCat=p.dataset.k; buildFlash(); } });
+$('#fcShuffle').addEventListener('click', buildFlash);
+buildFlash();
+
+/* ---------- 5. Emparejar ---------- */
+let mCat='div', mItems=[], selT=null, selD=null, mDone=0, mErr=0, mSec=0, mTimer=null, mBusy=false;
+$('#matchCats').innerHTML = CATS.map(c=>'<button class="pill" data-k="'+c.key+'">'+c.name+'</button>').join('');
+function matchInit(){
+  document.querySelectorAll('#matchCats .pill').forEach(p=>p.classList.toggle('active', p.dataset.k===mCat));
+  clearInterval(mTimer); mTimer=null; mSec=0; mErr=0; mDone=0; selT=selD=null; mBusy=false;
+  mItems = shuffle(TERMS.filter(t=>t.c===mCat)).slice(0,8);
+  $('#matchTerms').innerHTML = shuffle(mItems).map(it=>'<button class="match-item term" data-k="'+it.t+'">'+it.t+'</button>').join('');
+  $('#matchDefs').innerHTML = shuffle(mItems).map(it=>'<button class="match-item" data-k="'+it.t+'">'+it.d+'</button>').join('');
+  $('#matchPlay').hidden=false; $('#matchDone').hidden=true;
+  $('#matchTime').textContent='0s'; mStats();
+}
+function mStats(){ $('#matchPairs').textContent=mDone+'/'+mItems.length; $('#matchErr').textContent=mErr; }
+function mPick(e){
+  const el=e.target.closest('.match-item'); if(!el || el.disabled || mBusy) return;
+  if(!mTimer) mTimer=setInterval(()=>{ mSec++; $('#matchTime').textContent=fmt(mSec); },1000);
+  const isTerm = el.parentElement.id==='matchTerms';
+  if(isTerm){ if(selT) selT.classList.remove('selected'); selT = selT===el?null:el; if(selT) selT.classList.add('selected'); }
+  else { if(selD) selD.classList.remove('selected'); selD = selD===el?null:el; if(selD) selD.classList.add('selected'); }
+  if(!(selT&&selD)) return;
+  const a=selT, b=selD; selT=selD=null;
+  if(a.dataset.k===b.dataset.k){
+    [a,b].forEach(x=>{ x.classList.remove('selected'); x.classList.add('matched'); x.disabled=true; });
+    mDone++; mStats();
+    if(mDone===mItems.length){ clearInterval(mTimer); setTimeout(()=>{ $('#matchPlay').hidden=true; $('#matchDone').hidden=false;
+      $('#matchDoneText').textContent=catName(mCat)+': '+mItems.length+' pares en '+fmt(mSec)+' con '+mErr+(mErr===1?' error.':' errores.'); confetti(); },400); }
+  } else {
+    mErr++; mStats(); mBusy=true;
+    [a,b].forEach(x=>{ x.classList.remove('selected'); x.classList.add('wrong'); });
+    setTimeout(()=>{ [a,b].forEach(x=>x.classList.remove('wrong')); mBusy=false; },420);
+  }
+}
+$('#matchTerms').addEventListener('click', mPick); $('#matchDefs').addEventListener('click', mPick);
+$('#matchCats').addEventListener('click', e=>{ const p=e.target.closest('.pill'); if(p){ mCat=p.dataset.k; matchInit(); } });
+$('#matchReshuffle').addEventListener('click', matchInit); $('#matchRestart').addEventListener('click', matchInit);
+matchInit();
+})();
+</script>
+
+</body>
+</html>
